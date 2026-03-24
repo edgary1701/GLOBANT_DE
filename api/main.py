@@ -133,3 +133,30 @@ def obtener_empleados():
 
     df = pd.read_sql(query, engine)
     return df.to_dict(orient="records")
+
+@app.get("/metrics/departments-above-average")
+def departments_above_average():
+
+    query = """
+    WITH dptos_2021 AS (
+        SELECT 
+            d.id,
+            d.department,
+            COUNT(e.id) AS hired
+        FROM hired_employees e
+        JOIN departments d ON e.department_id = d.id
+        WHERE strftime('%Y', e.datetime) = '2021'
+        GROUP BY d.id, d.department
+    )
+    SELECT 
+        id,
+        department,
+        hired
+    FROM dptos_2021
+    WHERE hired > (SELECT AVG(hired) FROM dptos_2021)
+    ORDER BY hired DESC;
+    """
+
+    df = pd.read_sql(query, engine)
+
+    return df.to_dict(index=False)
