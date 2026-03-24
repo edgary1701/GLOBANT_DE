@@ -159,4 +159,4 @@ def obtener_departments():
 
     df = pd.read_sql(query, engine)
 
-    return df.to_dict(index=False)
+    return df.to_dict(orient="records")
