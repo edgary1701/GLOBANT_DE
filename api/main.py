@@ -1,6 +1,5 @@
 #####librerias#####
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import HTMLResponse
 import os
 import pandas as pd
 from sqlalchemy import create_engine, text
