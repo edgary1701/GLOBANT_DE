@@ -1,20 +1,39 @@
-from fastapi import UploadFile, File
+#####librerias#####
+from fastapi import FastAPI, UploadFile, File
+import os
+import pandas as pd
+from sqlalchemy import create_engine
 
 app = FastAPI()
 
+engine = create_engine("sqlite:///database.db")
+
+####testear la api
 @app.get("/")
 def root():
-    return {"test": "ejecutando FastAPI...."}
+    return {"test": "ejecutando API ..."}
 
-@app.post("/upload/{table}")
-async def upload_file(table: str, file: UploadFile = File(...)):
+####cargar csv####
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
     
-    file_location = f"data/{table}_{file.filename}"
+    os.makedirs("data", exist_ok=True)
+
+    filename = file.filename
+    table_name = os.path.splitext(filename)[0]
+
+    file_location = f"data/{table_name}.csv"
     
     with open(file_location, "wb") as f:
         f.write(await file.read())
 
+    #####lectura de datos
+    df = pd.read_csv(file_location)
+
+    ####ingesta de datos
+    df.to_sql(table_name, engine, if_exists="append", index=False)
+
     return {
-        "": f"Archivo cargado for {table}",
-        "Ruta": file_location
+        "message": f"Archivo cargado en tabla {table_name}",
+        "Cantidad de registros:": len(df)
     }
