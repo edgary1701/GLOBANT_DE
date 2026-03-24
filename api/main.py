@@ -134,8 +134,8 @@ def obtener_empleados():
     df = pd.read_sql(query, engine)
     return df.to_dict(orient="records")
 
-@app.get("/metrics/departments-above-average")
-def departments_above_average():
+@app.get("/metricas/departments-above-average")
+def obtener_departments():
 
     query = """
     WITH dptos_2021 AS (
