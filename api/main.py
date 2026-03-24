@@ -1,5 +1,6 @@
 #####librerias#####
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import HTMLResponse
 import os
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -53,7 +54,7 @@ def root():
     return {"prueba": "ejecutando API ..."}
 
 ####cargar csv####
-@app.post("/upload")
+@app.post("/upload") 
 async def upload_file(file: UploadFile = File(...)):
 
     os.makedirs("data", exist_ok=True)
@@ -90,7 +91,7 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
 
-@app.post("/batch/{table}")
+@app.post("/batch/{table}") 
 def batch_insert(table: str, data: List[dict]):
 
     if len(data) == 0:
@@ -110,3 +111,25 @@ def batch_insert(table: str, data: List[dict]):
 
     except Exception as e:
         return {"error": str(e)}
+    
+ ###analytics   
+@app.get("/metricas/quarter")
+def obtener_empleados():
+    query = """
+    SELECT 
+        d.department,
+        j.job,
+        SUM(CASE WHEN strftime('%m', e.datetime) IN ('01','02','03') THEN 1 ELSE 0 END) AS Q1,
+        SUM(CASE WHEN strftime('%m', e.datetime) IN ('04','05','06') THEN 1 ELSE 0 END) AS Q2,
+        SUM(CASE WHEN strftime('%m', e.datetime) IN ('07','08','09') THEN 1 ELSE 0 END) AS Q3,
+        SUM(CASE WHEN strftime('%m', e.datetime) IN ('10','11','12') THEN 1 ELSE 0 END) AS Q4
+    FROM hired_employees e
+    JOIN departments d ON e.department_id = d.id
+    JOIN jobs j ON e.job_id = j.id
+    WHERE strftime('%Y', e.datetime) = '2021'
+    GROUP BY d.department, j.job
+    ORDER BY d.department, j.job
+    """
+
+    df = pd.read_sql(query, engine)
+    return df.to_dict(orient="records")
